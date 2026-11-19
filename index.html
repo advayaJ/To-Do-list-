@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>To-do list</title>
+  <meta name="description" content="A tiny animated to-do list built with plain HTML, CSS and JavaScript." />
+
+  <!--
+    The only outside resource in this whole project: the Poppins font.
+    Everything else (icons, particles, glass, stars) is hand-made.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Our single stylesheet. -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!--
+    This tiny script runs BEFORE the page is painted, so a returning visitor
+    who picked "Daylight" never sees a flash of dark theme. It only adds the
+    class; script.js takes over afterwards.
+  -->
+  <script>
+    try {
+      if (localStorage.getItem('glass-todo.theme') === 'light') {
+        document.body.classList.add('light');
+      }
+    } catch (error) {
+      /* Private mode can block localStorage — dark theme is a fine fallback. */
+    }
+  </script>
+
+  <!-- ============================================================
+       BACKGROUND SCENE (decorative only, invisible to screen readers)
+       ============================================================ -->
+  <div class="scene" aria-hidden="true">
+    <div class="stars"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- ============================================================
+       THE APP SHELL
+       ============================================================ -->
+  <main class="app">
+
+    <!-- ---------- 1. HEADER ---------- -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11" /></svg>
+        </span>
+        <div class="brand-text">
+          <h1 class="title">To-do <span class="title-accent">list</span></h1>
+          <!-- Filled in by JavaScript with today's date. -->
+          <p class="today" id="today">&nbsp;</p>
+        </div>
+      </div>
+
+      <!-- Both icons live in the markup; CSS shows only the relevant one. -->
+      <button
+        class="icon-btn theme-toggle"
+        id="theme-toggle"
+        type="button"
+        aria-label="Switch to light theme"
+        aria-pressed="false"
+        title="Toggle theme"
+      >
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+        </svg>
+      </button>
+    </header>
+
+    <!-- ---------- 2. INPUT CARD ---------- -->
+    <section class="card glass input-card" id="input-card" aria-label="Add a task">
+      <form id="task-form" autocomplete="off" novalidate>
+        <!-- Row 1: the task text -->
+        <div class="input-row">
+          <label class="sr-only" for="task-input">Write your task</label>
+          <textarea
+            id="task-input"
+            class="task-input"
+            rows="3"
+            placeholder="Write your task here"
+            maxlength="140"
+          ></textarea>
+        </div>
+
+        <!-- Row 2: due date, priority and the Add button -->
+        <div class="meta-row">
+          <div class="field">
+            <label class="field-label" for="due-input">
+              Due date <span class="field-optional">(optional)</span>
+            </label>
+            <input
+              id="due-input"
+              class="due-input"
+              type="date"
+              title="Deadline: day / month / year"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="priority-input">
+              Priority <span class="field-optional">(optional)</span>
+            </label>
+            <select id="priority-input" class="priority-input" title="Priority (optional)">
+              <option value="">No priority</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <button class="btn-add" type="submit">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            <span>Add</span>
+          </button>
+        </div>
+
+        <!-- Spells out what the date boxes are for. -->
+        <p class="field-note">
+          The date box is the task's deadline, read as day / month / year.
+          Leave it empty when there is no deadline.
+        </p>
+      </form>
+    </section>
+
+    <!-- ---------- 3. CONTROL PANEL ---------- -->
+    <section class="card glass controls" aria-label="Filters and progress">
+      <div class="controls-row">
+        <!-- Filter pills behave like tabs, so they get the tab roles. -->
+        <div class="filters" role="tablist" aria-label="Filter tasks">
+          <button class="filter is-active" type="button" role="tab" data-filter="all" aria-selected="true">All</button>
+          <button class="filter" type="button" role="tab" data-filter="active" aria-selected="false">Active</button>
+          <button class="filter" type="button" role="tab" data-filter="done" aria-selected="false">Done</button>
+        </div>
+
+        <div class="search">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M16.5 16.5 21 21" />
+          </svg>
+          <label class="sr-only" for="search-input">Search tasks</label>
+          <input id="search-input" type="search" placeholder="Search" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <p class="stats-text">
+          <span id="stat-done">0 of 0 done</span>
+          <span class="stats-percent" id="stat-percent">0%</span>
+        </p>
+        <div
+          class="track"
+          id="progress"
+          role="progressbar"
+          aria-label="Tasks completed"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
+          <div class="track-fill" id="progress-fill"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 4. TASK LIST ---------- -->
+    <ul class="task-list" id="task-list" aria-label="Tasks"></ul>
+
+    <!-- Shown only when there are zero tasks at all. -->
+    <div class="empty-state" id="empty-state" hidden>
+      <svg class="empty-moon" viewBox="0 0 64 64" aria-hidden="true">
+        <path class="moon-crescent" d="M43.5 8.5A24 24 0 1 0 55.5 36 19 19 0 0 1 43.5 8.5Z" />
+        <circle class="moon-star" cx="47" cy="17" r="2.2" />
+        <circle class="moon-star" cx="55" cy="27" r="1.4" />
+      </svg>
+      <p class="empty-title">Nothing here yet</p>
+      <p class="empty-text">Add your first task above — even small steps look good in glass.</p>
+    </div>
+
+    <!-- Shown when tasks exist but the filter / search hides them all. -->
+    <p class="no-match" id="no-match" hidden>No tasks match your search.</p>
+
+    <!-- ---------- 5. FOOTER ---------- -->
+    <footer class="footer">
+      <p class="footer-count" id="footer-count">0 tasks · 0 done</p>
+      <button class="btn-ghost" id="clear-completed" type="button" disabled>Clear completed</button>
+    </footer>
+  </main>
+
+  <!-- Confetti is drawn here by hand-written canvas code in script.js. -->
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <!-- Toasts are created by JavaScript and stacked in here. -->
+  <div class="toast-stack" id="toast-stack" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

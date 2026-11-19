@@ -1,0 +1,1488 @@
+/* =====================================================================
+   TO-DO LIST — style.css
+
+   Read this file from top to bottom:
+   1. Design tokens (the two themes live here)
+   2. Base + background scene
+   3. Reusable glass recipe
+   4. Header
+   5. Input card
+   6. Control panel
+   7. Task chips
+   8. Empty / no-match states
+   9. Footer, toasts, confetti canvas
+  10. Keyframes
+  11. Reduced motion + small screens
+   ===================================================================== */
+
+
+/* =====================================================================
+   1. DESIGN TOKENS
+   Every colour in the app is a CSS custom property. Redefining these
+   properties under `body.light` re-skins the ENTIRE app instantly.
+   ===================================================================== */
+:root {
+  /* Page background — deep midnight gradient */
+  --bg-gradient: linear-gradient(160deg, #070714 0%, #0f0c29 55%, #24243e 100%);
+
+  /* Text */
+  --text: #f1f5f9;
+  --muted: #8b93ad;
+
+  /* Glass recipe */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 20px 60px rgba(2, 6, 23, 0.55);
+
+  /* Smaller surfaces: inputs, pills, chips */
+  --field-bg: rgba(255, 255, 255, 0.05);
+  --field-border: rgba(255, 255, 255, 0.1);
+  --chip-bg: rgba(255, 255, 255, 0.04);
+
+  /* Accent gradient (violet -> cyan) */
+  --accent-1: #8b5cf6;
+  --accent-2: #22d3ee;
+  --accent-gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+
+  /* Priority colours: rose = high, amber = medium, green = low */
+  --high: #fb7185;
+  --medium: #fbbf24;
+  --low: #34d399;
+
+  /* Faint washes painted behind a task block of each priority */
+  --high-wash: rgba(251, 113, 133, 0.13);
+  --medium-wash: rgba(251, 191, 36, 0.12);
+  --low-wash: rgba(52, 211, 153, 0.12);
+
+  /* Background decoration */
+  --blob-1: #8b5cf6;
+  --blob-2: #22d3ee;
+  --blob-3: #f472b6;
+  --blob-opacity: 0.55;
+  --star-opacity: 1;
+
+  /* Glows (kept as tokens so the light theme can soften them) */
+  --glow-a: rgba(139, 92, 246, 0.4);
+  --glow-b: rgba(34, 211, 238, 0.35);
+
+  /* Misc */
+  --checkbox-border: rgba(255, 255, 255, 0.28);
+  --radius: 20px;
+  --radius-sm: 14px;
+}
+
+/* ---------------------------------------------------------------------
+   LIGHT THEME — "Frosted Daylight".
+   Only tokens change; not a single layout rule below needs to know.
+   --------------------------------------------------------------------- */
+body.light {
+  --bg-gradient: linear-gradient(160deg, #dfe7ff 0%, #ece4ff 52%, #ffe7f0 100%);
+
+  --text: #1e293b;
+  --muted: #64748b;
+
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.85);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 18px 45px rgba(80, 90, 160, 0.18);
+
+  --field-bg: rgba(255, 255, 255, 0.6);
+  --field-border: rgba(100, 116, 139, 0.22);
+  --chip-bg: rgba(255, 255, 255, 0.45);
+
+  /* Slightly deeper accents so white text stays readable */
+  --accent-1: #7c3aed;
+  --accent-2: #0891b2;
+
+  /* Deeper priority ink for contrast on pale glass */
+  --high: #e11d48;
+  --medium: #b45309;
+  --low: #059669;
+
+  --high-wash: rgba(225, 29, 72, 0.09);
+  --medium-wash: rgba(217, 119, 6, 0.1);
+  --low-wash: rgba(5, 150, 105, 0.1);
+
+  --blob-1: #b7c6ff;
+  --blob-2: #a5f3fc;
+  --blob-3: #fbcfe8;
+  --blob-opacity: 0.5;
+
+  --star-opacity: 0;
+
+  --glow-a: rgba(124, 58, 237, 0.2);
+  --glow-b: rgba(8, 145, 178, 0.18);
+
+  --checkbox-border: rgba(71, 85, 105, 0.4);
+}
+
+
+/* =====================================================================
+   2. BASE + BACKGROUND SCENE
+   ===================================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  /* `color-scheme` tells the browser how to paint native controls
+     (the date picker, the select dropdown, scrollbars). It is a token,
+     so the whole app switches together with the theme. */
+  color-scheme: dark;
+  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg-gradient) fixed;
+  display: flex;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 48px) clamp(12px, 3vw, 24px) 48px;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: color 0.5s ease;
+}
+
+body.light {
+  color-scheme: light;
+}
+
+/* Visually hidden, but still read by screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------
+   The beginner trap: elements with `hidden` must stay hidden even when
+   their class sets `display: flex`. These rules win with `!important`.
+   --------------------------------------------------------------------- */
+[hidden] {
+  display: none !important;
+}
+
+/* Everything decorative lives in one fixed layer behind the UI. */
+.scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* A hand-made star field: four radial-gradient dots, tiled forever. */
+.stars {
+  position: absolute;
+  inset: -20%;
+  background-image:
+    radial-gradient(1.6px 1.6px at 30px 40px, rgba(255, 255, 255, 0.9), transparent 70%),
+    radial-gradient(1.2px 1.2px at 140px 90px, rgba(255, 255, 255, 0.7), transparent 70%),
+    radial-gradient(1.8px 1.8px at 210px 160px, rgba(255, 255, 255, 0.55), transparent 70%),
+    radial-gradient(1px 1px at 80px 190px, rgba(255, 255, 255, 0.65), transparent 70%);
+  background-size: 260px 260px;
+  background-repeat: repeat;
+  opacity: var(--star-opacity);
+  animation: twinkle 6s ease-in-out infinite alternate;
+  transition: opacity 0.6s ease;
+}
+
+/* Three big blurred neon blobs drifting behind the glass. */
+.blob {
+  position: absolute;
+  width: min(46vw, 420px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: var(--blob-opacity);
+  transition: background-color 0.6s ease, opacity 0.6s ease;
+  will-change: transform;
+}
+
+.blob-1 {
+  top: -10%;
+  left: -12%;
+  background: var(--blob-1);
+  animation: drift-a 24s ease-in-out infinite alternate;
+}
+
+.blob-2 {
+  top: 34%;
+  right: -16%;
+  background: var(--blob-2);
+  animation: drift-b 28s ease-in-out infinite alternate;
+}
+
+.blob-3 {
+  bottom: -18%;
+  left: 18%;
+  background: var(--blob-3);
+  animation: drift-c 20s ease-in-out infinite alternate;
+}
+
+/* The app sits above the scene. */
+.app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: shell-in 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+
+/* =====================================================================
+   3. THE GLASS RECIPE
+   One class, reused by every panel so the look stays consistent.
+   ===================================================================== */
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+}
+
+.card {
+  padding: 16px;
+}
+
+
+/* =====================================================================
+   4. HEADER
+   ===================================================================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 2px 4px 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* The gradient logo badge with the check icon. */
+.logo {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--accent-gradient);
+  box-shadow: 0 8px 24px var(--glow-a), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.logo svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.3rem, 4.6vw, 1.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* "Todo" is painted with the accent gradient. */
+.title-accent {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.today {
+  margin: 3px 0 0;
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* Shared look for square icon buttons. */
+.icon-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.3s ease,
+    border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-btn:hover {
+  transform: rotate(8deg) scale(1.05);
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: 0 10px 26px var(--glow-a), 0 0 0 3px rgba(139, 92, 246, 0.12);
+}
+
+.icon-btn:active {
+  transform: rotate(0deg) scale(0.97);
+}
+
+/* Only the correct icon is visible in each theme. */
+.icon-sun {
+  display: none;
+}
+
+body.light .icon-sun {
+  display: block;
+}
+
+body.light .icon-moon {
+  display: none;
+}
+
+body.light .theme-toggle {
+  color: #b45309;
+}
+
+/* Keep keyboard focus obvious everywhere. */
+:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
+
+.theme-toggle {
+  margin-left: auto;
+}
+
+
+/* =====================================================================
+   5. INPUT CARD
+   ===================================================================== */
+.input-card {
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* The whole card glows while any of its fields has focus. */
+.input-card:focus-within {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: var(--glass-shadow), 0 0 0 3px rgba(139, 92, 246, 0.16),
+    0 0 44px var(--glow-b), inset 0 1px 0 var(--glass-highlight);
+}
+
+/* Applied by JS for an empty submit, then removed. */
+.input-card.shake {
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+.input-row {
+  display: flex;
+}
+
+/* A roomy, clearly outlined writing area (a textarea, so long tasks have
+   space to breathe instead of a thin single line). */
+.task-input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 96px;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 14px;
+  outline: none;
+  resize: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease,
+    background-color 0.4s ease;
+}
+
+.task-input:focus {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.16);
+}
+
+/* Keep the date / priority row away from the writing area. */
+.input-row + .meta-row {
+  margin-top: 10px;
+}
+
+.task-input::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  /* Labels sit above the inputs, so line the bottom of the row up instead
+     of the middle. */
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.field {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+/* Small visible caption on top of each field. The due date is a plain
+   YYYY-MM-DD box, so naming it (and explaining it below) matters. */
+.field-label {
+  display: block;
+  margin: 0 0 5px 2px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.field-optional {
+  opacity: 0.75;
+}
+
+.field-note {
+  margin: 10px 2px 0;
+  font-size: 0.68rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* Native date + select, re-dressed as glass. */
+.due-input,
+.priority-input {
+  width: 100%;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease,
+    background-color 0.4s ease;
+}
+
+.due-input:focus,
+.priority-input:focus {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.16);
+}
+
+/* Make the native dropdown feel at home in the dark theme. */
+.priority-input option {
+  color: var(--text);
+  background: #15142c;
+}
+
+body.light .priority-input option {
+  background: #ffffff;
+}
+
+.btn-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 10px 18px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent-gradient);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px var(--glow-a);
+  transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1),
+    box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.btn-add svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  filter: saturate(115%);
+  box-shadow: 0 12px 30px var(--glow-a), 0 0 26px var(--glow-b);
+}
+
+.btn-add:active {
+  transform: translateY(0) scale(0.98);
+}
+
+
+/* =====================================================================
+   6. CONTROL PANEL
+   ===================================================================== */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Filter pills sit inside their own little track. */
+.filters {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--chip-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+}
+
+.filter {
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.25s ease, background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.filter:hover {
+  color: var(--text);
+}
+
+.filter.is-active {
+  color: #fff;
+  background: var(--accent-gradient);
+  box-shadow: 0 6px 16px var(--glow-a);
+}
+
+.search {
+  flex: 1 1 130px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.search:focus-within {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14);
+}
+
+.search-icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: none;
+  border: none;
+  outline: none;
+}
+
+.search input::placeholder {
+  color: var(--muted);
+}
+
+.stats-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-text {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+
+#stat-done {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.stats-percent {
+  margin-left: auto;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Progress track + animated gradient fill. */
+.track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  border: 1px solid var(--field-border);
+  overflow: hidden;
+}
+
+.track-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-gradient);
+  box-shadow: 0 0 12px var(--glow-b);
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+
+/* =====================================================================
+   7. TASK LIST + CHIPS
+   ===================================================================== */
+/* The list grows with its groups now, and the page scrolls. A fixed-height
+   scroller would hide whole priority sections behind a nested scrollbar. */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  overflow-x: hidden;
+}
+
+/* An empty list should not leave a gap behind. */
+.task-list:empty {
+  display: none;
+}
+
+/* ---- Priority sections ----
+   The list is split into High / Medium / Low / No priority blocks, and
+   each block is divided again by due date (Overdue, Today, This week...). */
+.task-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Breathing room between one priority section and the next. */
+.task-group + .task-group {
+  margin-top: 8px;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 2px 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The dot borrows the section's ink colour, so each section is instantly
+   recognisable even before you read the title. */
+.group-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.group-high .group-head {
+  color: var(--high);
+}
+
+.group-medium .group-head {
+  color: var(--medium);
+}
+
+.group-low .group-head {
+  color: var(--low);
+}
+
+.group-count {
+  margin-left: auto;
+  padding: 1px 8px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  background: var(--chip-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+}
+
+.group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* The tiny label + hairline that separates due-date buckets. */
+.due-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 2px 7px;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.due-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--field-border);
+}
+
+.group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One glass chip per task. */
+.task-chip {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.3), inset 0 1px 0 var(--glass-highlight);
+  transition: transform 0.25s ease, box-shadow 0.25s ease,
+    border-color 0.25s ease, background-color 0.4s ease;
+}
+
+/* Each task block carries a faint wash of its priority colour, so a rose
+   block means high, amber means medium and green means low. */
+.task-chip.chip-high {
+  background: linear-gradient(180deg, var(--high-wash), transparent 80%), var(--glass-bg);
+}
+
+.task-chip.chip-medium {
+  background: linear-gradient(180deg, var(--medium-wash), transparent 80%), var(--glass-bg);
+}
+
+.task-chip.chip-low {
+  background: linear-gradient(180deg, var(--low-wash), transparent 80%), var(--glass-bg);
+}
+
+/* Lift + violet neon glow on hover. */
+.task-chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.42), 0 0 24px var(--glow-a),
+    inset 0 1px 0 var(--glass-highlight);
+}
+
+/* Entrance used for the first paint and for freshly added tasks. */
+.task-chip.enter {
+  animation: chip-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+/* Slide-out before a task is really deleted. */
+.task-chip.leaving {
+  animation: chip-out 0.3s ease forwards;
+  pointer-events: none;
+}
+
+/* ---- Checkbox ---- */
+.checkbox {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1.5px solid var(--checkbox-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.3s ease, border-color 0.3s ease,
+    box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.checkbox:hover {
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.16);
+}
+
+.checkbox:active {
+  transform: scale(0.9);
+}
+
+.checkbox .check {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Draw the tick by animating the dash offset. */
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transition: stroke-dashoffset 0.35s ease 0.05s;
+}
+
+.task-chip.done .checkbox {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  box-shadow: 0 6px 16px var(--glow-a);
+}
+
+.task-chip.done .checkbox .check {
+  stroke-dashoffset: 0;
+}
+
+/* Pop added by JS right after a toggle. */
+.task-chip.pop .checkbox {
+  animation: check-pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* ---- Text + meta ---- */
+.task-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.task-text {
+  display: inline-block;
+  /* Shrink to the text, so decorations never stretch across the row. */
+  align-self: flex-start;
+  max-width: 100%;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
+  cursor: text;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+/* The strike-through is a gradient bar painted on the text itself.
+   `box-decoration-break: clone` repeats it on every wrapped line, and
+   animating background-size makes it grow left -> right. */
+.task-label {
+  display: inline;
+  background-image: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  background-repeat: no-repeat;
+  background-position: 0 52%;
+  background-size: 0% 1.5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.task-chip.done .task-text {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.task-chip.done .task-label {
+  background-size: 100% 1.5px;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.64rem;
+  color: var(--muted);
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  line-height: 1.7;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  border: 1px solid var(--field-border);
+  white-space: nowrap;
+}
+
+/* Overdue: rose ink + soft pulsing halo. */
+.due-chip.is-overdue {
+  color: var(--high);
+  background: rgba(251, 113, 133, 0.12);
+  border-color: rgba(251, 113, 133, 0.4);
+  animation: overdue-pulse 2.2s ease-in-out infinite;
+}
+
+/* Priority chips get a tiny glowing dot. */
+.priority-chip .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.priority-high {
+  color: var(--high);
+  background: rgba(251, 113, 133, 0.12);
+  border-color: rgba(251, 113, 133, 0.35);
+}
+
+.priority-medium {
+  color: var(--medium);
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.priority-low {
+  color: var(--low);
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+/* ---- Row actions ---- */
+.task-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.task-chip:hover .task-actions,
+.task-chip:focus-within .task-actions {
+  opacity: 1;
+  transform: none;
+}
+
+.act {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.act svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.act:hover {
+  color: var(--text);
+  background: var(--field-bg);
+  border-color: var(--field-border);
+}
+
+/* Edit glows cyan, delete glows pink. */
+.act-edit:hover {
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.45);
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.45);
+}
+
+.act-delete:hover {
+  color: #fb7185;
+  border-color: rgba(251, 113, 133, 0.45);
+  box-shadow: 0 0 16px rgba(251, 113, 133, 0.45);
+}
+
+/* Touch devices never hover, so keep the buttons visible there. */
+@media (hover: none) {
+  .task-actions {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Inline edit field that replaces the text. */
+.edit-input {
+  width: 100%;
+  padding: 6px 9px;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1px solid rgba(139, 92, 246, 0.55);
+  border-radius: 10px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.16);
+}
+
+
+/* =====================================================================
+   8. EMPTY + NO-MATCH STATES
+   ===================================================================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 34px 18px;
+  text-align: center;
+  background: var(--chip-bg);
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius);
+}
+
+.empty-moon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.55));
+  animation: float 5s ease-in-out infinite;
+}
+
+.moon-crescent {
+  stroke: var(--accent-1);
+}
+
+.moon-star {
+  fill: var(--accent-2);
+  stroke: none;
+}
+
+.empty-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.empty-text {
+  max-width: 32ch;
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.no-match {
+  margin: 0;
+  padding: 20px 16px;
+  font-size: 0.78rem;
+  text-align: center;
+  color: var(--muted);
+  background: var(--chip-bg);
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-sm);
+}
+
+
+/* =====================================================================
+   9. FOOTER, TOASTS, CONFETTI CANVAS
+   ===================================================================== */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.footer-count {
+  margin: 0;
+  font-size: 0.73rem;
+  color: var(--muted);
+}
+
+.btn-ghost {
+  margin-left: auto;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease, opacity 0.25s ease;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--text);
+  border-color: rgba(251, 113, 133, 0.45);
+  box-shadow: 0 0 18px rgba(251, 113, 133, 0.3);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* Floating glass toasts, bottom centre. */
+.toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: min(92vw, 420px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  font-size: 0.76rem;
+  color: var(--text);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  box-shadow: var(--glass-shadow);
+  white-space: nowrap;
+  animation: toast-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+/* A tiny gradient dot before every message. */
+.toast::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  box-shadow: 0 0 8px var(--glow-b);
+}
+
+.toast.is-going {
+  animation: toast-out 0.3s ease forwards;
+}
+
+/* Full-window confetti layer above everything, ignoring the mouse. */
+#confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+
+/* =====================================================================
+   10. KEYFRAMES
+   ===================================================================== */
+
+/* Page shell fades up. */
+@keyframes shell-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A task chip arriving. */
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A task chip leaving. */
+@keyframes chip-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(48px) scale(0.96);
+  }
+}
+
+/* Empty submit. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+/* Checkbox pop. */
+@keyframes check-pop {
+  0% {
+    transform: scale(0.85);
+  }
+  55% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Overdue halo. */
+@keyframes overdue-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(251, 113, 133, 0);
+  }
+}
+
+/* Star field breathing. */
+@keyframes twinkle {
+  from {
+    opacity: calc(var(--star-opacity) * 0.5);
+  }
+  to {
+    opacity: var(--star-opacity);
+  }
+}
+
+/* The three slow blob drifts. */
+@keyframes drift-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(70px, 50px, 0) scale(1.14);
+  }
+}
+
+@keyframes drift-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  to {
+    transform: translate3d(-60px, -40px, 0) scale(0.92);
+  }
+}
+
+@keyframes drift-c {
+  from {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  to {
+    transform: translate3d(50px, -60px, 0) scale(1.16);
+  }
+}
+
+/* Empty-state moon bobbing. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Toasts slide up from the bottom, then fade away. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+
+
+/* =====================================================================
+   11. REDUCED MOTION + SMALL SCREENS
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .stars,
+  .blob,
+  .empty-moon {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .card {
+    padding: 14px;
+  }
+
+  .field {
+    flex: 1 1 100%;
+  }
+
+  .btn-add {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+
+  .filters {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .filter {
+    flex: 1;
+  }
+
+  .search {
+    flex: 1 1 100%;
+  }
+
+  .task-chip {
+    gap: 9px;
+    padding: 11px 12px;
+  }
+
+  /* On phones there is not room for the "added" stamp plus the due date
+     and priority, so the least useful chip drops out and the rest stay on
+     ONE tidy line instead of wrapping the priority badge onto its own row. */
+  .meta-time {
+    display: none;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+  }
+}
